@@ -1,0 +1,295 @@
+Parallel Meaning Bank 4.0.0
+============================
+
+
+Introduction
+------------
+
+The Parallel Meaning Bank (PMB) is a parallel corpus of sentences and short texts
+with formal semantic annotations for four languages: English, German, Dutch
+and Italian. The meaning representations are based on Discourse Representation
+Theory (DRT), and combine logical with lexical approaches to linguistic meaning.
+The representations comprise:
+
+* logical symbols (boolean operators and comparison operators)
+* non-logical symbols (WordNet synsets and VerbNet roles)
+
+Following DRT, we call the meaning representations Discourse Representation
+Structures (DRSs). The DRSs are provided in the familiar box-like format, in 
+clause format, and in simplified box notation (SBN). The flat clause format is used
+for evaluation purposes and also contains alignment with the words of the input
+sentence. In contrast to DRT, we adopt a neo-Davidsonian analysis of events,
+using the thematic roles of VerbNet as relations between individual entities,
+and the synsets of WordNet to denote individual concepts.
+
+Data Statement
+------------
+This data set can be characterised as follows. The meta data of each document gives
+information about the source. There is a high gender imbalance: there are approximately
+twice as many male as female named entities. The documents in the gold part are on average
+shorter than in the silver part of the corpus. Some of the texts might contain offensive
+language. The current release comprises examples that are certainly not representative for 
+the entire corpus. This is because of the way they were selected: not randomly, but on the 
+basis of quality of the semantic analysis. Nevertheless, this selection contains a diverse 
+set of semantic phenomena, including: quantification, negation, modal operators, scope, 
+tense, and referring expressions.
+
+About this release
+----------------
+
+This release is a frozen snapshot of a subset of PMB documents that are marked as gold,
+silver or bronze standard in the current development version. The gold folder contains all
+documents that are fully manually checked, while the silver contains documents
+that are only partially manually checked. Bronze documents do not have any manual
+annotations. WARNING: use silver and bronze documents at your own risk!
+
+The current development version itself is made available via a wiki-like Web interface
+called PMB Explorer. Semantic annotation is a very hard task and despite thorough manual
+checking can still contain mistakes. If you find any errors in the annotation, you can
+either let us know (via the website) or, if you feel sure, you can correct them yourself,
+and thus contribute directly to the PMB. To do so or get more information about the
+project, visit http://pmb.let.rug.nl
+
+Directory Layout
+----------------
+
+The PMB is partitioned into 100 parts. Each part is identified by a
+two-digit number. A part contains up to 10,000 documents. Within a part,
+each document is identified by a four-digit number. The ID of a
+document consists of the part number, followed by a slash, followed by
+the document number, e.g. 00/0030.
+
+pmb-4.0.0
+   data/                               contains the gold, silver and bronze data
+       gold/                           contains the gold data
+           p00/                        contains the gold data for part 00
+               d0030/                  contains the files for document 00/0030
+               ...                                 (see next section)
+               ...
+       silver/                         contains the silver data
+           p00/                        contains the silver data for part 00
+               d0704/                  contains the files for document 00/0704
+               ...                                 (see next section)
+               ...
+       bronze/                         contains the bronze data
+           p00/                        contains the bronze data for part 00
+               d0066/                  contains the files for document 00/0066
+               ...                                 (see next section)
+   doc/                                contains papers describing the PMB
+       ...
+   src/
+        extract.sh                     script to automatically create train/dev/test splits
+        extract_conll.py               script to automatically extract layers (see below)
+        boxer_senses                   list of senses that might be introduced by Boxer
+        clf_signature.yaml             signature of the format checker (CLF referee)
+        senses_for_named_entities.yaml list of senses allowed for certain named entities
+   licenses/                           contains license statements for subcorpora used
+        ...
+   README                              this file
+   NEWS                                list of major changes between releases
+   
+
+File Formats
+------------
+
+Every document directory contains several files with the raw texts and resulting analyses.
+They are all encoded in UTF-8 with Unix-style line endings. Each file starts with a
+two-letter language identifier (ISO-639-1).
+
+ *.met       Meta data about the document, such as language, title, data, source, genre, and
+             subcorpus. The format is one key: value pair per line.
+
+ *.raw       The raw text of the document. The standoff annotation (see below) refers to
+             character offsets (not byte offsets) within this document.
+ 
+ *.status    Contains eight rows, indicating the status (gold, silver, bronze) of each
+             tagging layer (tok, sem, sym, cat, sns, rol). For gold documents the
+             status is gold for each layer, for silver there can be differences. You can
+             have a more detailed look at the tagging layers here:
+             http://pmb.let.rug.nl/explorer/explore.php
+
+ *.tok.off   Standoff tokenization annotation in a vertical format. It contains one word
+             token per line. Columns are separated by one space character. They contain,
+             respectively:
+                1. the character offset of the start of the token;
+                2. the character offset of the end of the token;
+                3. a token ID, consisting of the number of the token within the sentence;
+                   (last three digits) and the number of the sentence within the
+                   text (all other digits);
+                4. the token itself.
+
+ *.tok.iob   Tokenization in IOB format. It contains one character per line. Columns are
+             separated by one space character. They contain, respectively:
+                1. the Unicode code point of the character in decimal notation;
+                2. a character tag: T (start of word token), S (start of sentence),
+                   I (inside token) and O (outside token).
+
+ *.parse.tags Contains the CCG-style derivations
+
+ *.drs.xml   Contains the Discourse Representation Structure (DRS) representing the meaning
+             of the text. The formalism used is Discourse Representation Theory (DRT),
+             extended to use neo-Davidsonian events with roles from VerbNet and concepts
+             from WordNet.
+
+ *.drs.clf   Contains the DRS in clause notation, with word alignments. This is the file
+             type that is used to calculate semantic similarity between DRSs.
+ 
+ *.drs.sbn   Contains the same DRS in simplified box notation.         
+
+Semantic Parsing
+------------
+
+For people interested in semantic parsing, we added a script (src/extract.sh) to help
+with automatically creating train/dev/splits. It will create the recommended splits for 
+each language, storing them in exp_data/. It creates a *.txt.raw file containing the raw 
+sentences, and a *.txt and *.txt.sbn file that contains all the DRSs in clause or SBN 
+format, separated by a white line.
+
+Simply run the following command from the main release directory:
+
+    ./src/extract.sh
+
+Note that this script might take some time. Likely, for your purposes it makes more sense
+to download the data directly from here: https://pmb.let.rug.nl/releases/exp_data_4.0.0.zip
+
+The train/dev/split is created on part-level and differs per language:
+
+    en:
+        train - everything not in part X0 or X1
+        dev   - parts [0-4]0 (p00, p10, p20, p30, p40)
+        test  - parts X1 (i.e. p01, p11, p21, etc)
+        eval -  parts [5-9]0 (p50, p60, p70, p80, p90)
+    de:
+        train - everything not in X0, X1 and X2
+        dev   - parts X0
+        test  - parts X1 and X2
+    it:
+        train - X5, X6, X7, X8 and X9
+        dev   - parts X0 and X1
+        test  - parts X2, X3 and X4
+    nl:
+        train - X6, X7, X8 and X9
+        dev   - parts X0 and X1
+        test  - parts X2, X3, X4 and X5
+
+Note that these are our suggested splits, to make comparing approaches easier, but you are
+free to create different splits if they fit your own needs better.
+
+For English, we also add an evaluation set, which is an extended version of the held out test set
+that was used in the first shared task on DRS Parsing (Abzianidze et al. 2020 - 
+https://aclanthology.org/W19-1201.pdf). We ask you treat this set as a leaderboard set: please
+only evaluate your final model on this set (i.e. one score per paper). See pmb.let.rug.nl for 
+the leaderboard scores of previous models. If you forward us your score, we will include it!
+
+Layer Extraction
+----------
+We provide a script that can extract token-level annotations with desired statuses. For
+example, it is possible to obtain all gold standard semantic tags, to train a semantic
+tagging model. Moreover, the script also allows you to include information of other layers,
+which can be filtered according to their status (gold/silver bronze).
+
+The extracted data is formatted similarly to the CoNLL-U format. The first column is always
+for tokens; the rest of the columns can be changed according to your preference. Raw sentences
+and document IDs are included as comments. One needs to provide a file path for a json file
+that records document ids, available translations and their annotation statuses. Train, dev
+and test splits are based on a regex for part numbers.
+
+Usage:
+
+Extract gold standard data for English semantic tagging and split it into
+train, dev, and test parts (according to the official PMB recommendation):
+
+    python src/extract_conll.py en PMB_DATA_DIR DIR_FOR_SPLIT_FILES -j statuses.json -ls tok:g sem:g
+
+Extract silver standard data for English semantic tagging that will be used only
+for training (therefore, all the data is collected in a single file 'train_silver'):
+
+    python src/extract_conll.py en PMB_DATA_DIR DIR_FOR_SPLIT_FILES -j statuses.json -ls tok:g sem:s -sp train_silver:..
+
+Extract gold standard data for German semantic role labeling, append it with
+additional annotation layers, like CCG categories, semantic tags, and symbols of
+at least silver annotation status and split it into recommended train, dev, and test parts:
+
+    python src/extract_conll.py de PMB_DATA_DIR DIR_FOR_SPLIT_FILES -j statuses.json -ls tok:g rol:g cat:gs sem:gs sym:gs -sp dev:.0 test:.[1-2] train:.[3-9]
+
+
+Statistics gold
+----------
+
+Number of documents, sentences and tokens per language:
+
+    Documents  Sentences  Tokens 
+en  10715      10813      70307  
+de  2844       2847       16571  
+it  1686       1686       9205   
+nl  1467       1468       9025   
+
+Number of documents per subcorpus per language:
+
+    Tatoeba  Questions  RTE  GMB  SICK  Incidents  INTERSECT 
+en  9858     353        238  1    89    4          172       
+de  2676     13         108  0    0     0          47        
+it  1532     54         100  0    0     0          0         
+nl  1298     50         119  0    0     0          0         
+
+Statistics silver
+----------
+
+Number of documents, sentences and tokens per language:
+
+    Documents  Sentences  Tokens  
+en  127303     136491     1441919 
+de  6355       6653       60404   
+it  4088       4271       33314   
+nl  1440       1613       13843   
+
+Number of documents per subcorpus per language:
+
+    Tatoeba  Questions  RTE   GMB  SICK  Incidents  INTERSECT 
+en  100636   924        1827  577  5930  499        16910     
+de  5298     24         192   0    0     0          841       
+it  3704     135        172   0    0     77         0         
+nl  1275     69         43    0    0     53         0         
+
+Statistics bronze
+----------
+
+Number of documents, sentences and tokens per language:
+
+    Documents  Sentences  Tokens  
+en  156286     164708     1463721 
+de  151493     157273     1447415 
+it  100963     105712     817436  
+nl  28265      31434      288975  
+
+Number of documents per subcorpus per language:
+
+    Tatoeba  Questions  RTE   GMB  SICK  Incidents  INTERSECT 
+en  140517   322        489   19   40    2780       12119     
+de  129298   104        1353  0    0     0          20738     
+it  96626    969        1222  0    0     2146       0         
+nl  24715    324        1689  0    0     1537       0         
+
+
+Disclaimer
+----------
+The creators and annotators of the PMB do not necessarily share all views found in the text.
+Indeed, some of the views in the texts of the PMB might be offensive to readers.
+We do think including such texts from the corpus is beneficial for researchers working on hate-speech.
+
+References
+----------
+
+We hope you find this release of the PMB useful for your research. If you want to
+refer to the PMB in your work please cite the following paper (for your convenience,
+a bibtex entry is provided as well within this release):
+
+ Lasha Abzianidze, Johannes Bjerva, Kilian Evang, Hessel Haagsma, Rik van Noord,
+ Pierre Ludmann, Duc-Duy Nguyen, Johan Bos (2017): The Parallel Meaning Bank:
+ Towards a Multilingual Corpus of Translations Annotated with Compositional
+ Meaning Representations. Proceedings of the 15th Conference of the European
+ Chapter of the Association for Computational Linguistics (EACL), pp 242–247,
+ Valencia, Spain.
+
+The Parallel Meaning Bank website is at http://pmb.let.rug.nl.
+For contact, use the following email address: johan.bos@rug.nl.
