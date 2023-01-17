@@ -24,7 +24,7 @@ done
 raw_sbn_path=~/SBN-data/pmb-4.0.0/data/it
 bash_dir=~/SBN-data/it
 mkdir -p $bash_dir/gold
-python ~/SBN-Process/1_split_sbn_accuracy.py -i $raw_sbn_path/gold/all_sbn.txt -ipath $raw_sbn_path/gold -o1 $bash_dir/gold/train.txt -o2 $bash_dir/gold/dev.txt -o3 $bash_dir/gold、test.txt
+python ~/SBN-Process/1_split_sbn_accuracy.py -i $raw_sbn_path/gold/all_sbn.txt -ipath $raw_sbn_path/gold -o1 $bash_dir/gold/train.txt -o2 $bash_dir/gold/dev.txt -o3 $bash_dir/gold/test.txt
 
 mkdir -p $bash_dir/silver
 mkdir -p $bash_dir/bronze
